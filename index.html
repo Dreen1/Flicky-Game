@@ -1,1 +1,35 @@
-
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html>
+<head>
+    <title>Flick Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            border: 2px solid #000;
+            cursor: crosshair;
+        }
+        #feedback {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            height: 30px;
+        }
+        .too-slow { color: red; }
+        .valid { color: green; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="feedback"></div>
+    <script src="game.js"></script>
+</body>
+</html>
