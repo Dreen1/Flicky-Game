@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -45,14 +46,23 @@ public static class FlickMath
     }
 
     // Returns how far along the curve (0..1) it first touches the circle, or -1 for no hit.
-    public static float CurveHitT(Vector2 s, Vector2 c, Vector2 e, Vector2 center, float radius, int samples = 40)
+    // With wrap, each short piece of the curve is moved onto the board first,
+    // so a ship that crosses an edge can still hit targets on the far side.
+    public static float CurveHitT(Vector2 s, Vector2 c, Vector2 e, Vector2 center, float radius,
+                                  Func<Vector2, Vector2> wrap = null, int samples = 40)
     {
         Vector2 prev = s;
         for (int i = 1; i <= samples; i++)
         {
             float t = (float)i / samples;
             Vector2 p = Bezier(s, c, e, t);
-            if (SegmentHitsCircle(prev, p, center, radius)) return t;
+            Vector2 shift = Vector2.zero;
+            if (wrap != null)
+            {
+                Vector2 mid = (prev + p) * 0.5f;
+                shift = wrap(mid) - mid;
+            }
+            if (SegmentHitsCircle(prev + shift, p + shift, center, radius)) return t;
             prev = p;
         }
         return -1f;

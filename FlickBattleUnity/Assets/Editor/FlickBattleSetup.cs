@@ -371,7 +371,7 @@ public static class FlickBattleSetup
         CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
-        scaler.matchWidthOrHeight = 0.5f;
+        scaler.matchWidthOrHeight = 1f; // keeps the score bar the same share of screen height
         canvasGo.AddComponent<GraphicRaycaster>();
 
         GameObject es = new GameObject("EventSystem");
@@ -380,10 +380,23 @@ public static class FlickBattleSetup
 
         Transform t = canvasGo.transform;
         UIManager ui = canvasGo.AddComponent<UIManager>();
-        ui.blueCountText = Text(t, "BlueCount", "BLUE: 5", new Vector2(0, 1), new Vector2(40, -20), 48, TextAlignmentOptions.Left);
-        ui.turnText = Text(t, "Turn", "BLUE'S TURN", new Vector2(0.5f, 1), new Vector2(0, -20), 52, TextAlignmentOptions.Center);
-        ui.feedbackText = Text(t, "Feedback", "", new Vector2(0.5f, 1), new Vector2(0, -95), 56, TextAlignmentOptions.Center);
-        ui.redCountText = Text(t, "RedCount", "RED: 5", new Vector2(1, 1), new Vector2(-40, -20), 48, TextAlignmentOptions.Right);
+
+        // Score bar across the top. Its height matches GameManager.hudFraction (12% of 1080)
+        GameObject bar = new GameObject("Score Bar", typeof(RectTransform));
+        bar.transform.SetParent(t, false);
+        RectTransform barRt = (RectTransform)bar.transform;
+        barRt.anchorMin = new Vector2(0, 1);
+        barRt.anchorMax = new Vector2(1, 1);
+        barRt.pivot = new Vector2(0.5f, 1);
+        barRt.sizeDelta = new Vector2(0, 1080 * gm.hudFraction);
+        Image barImage = bar.AddComponent<Image>();
+        barImage.color = new Color(0f, 0f, 0.02f, 0.85f);
+        barImage.raycastTarget = false;
+
+        ui.blueCountText = Text(t, "BlueCount", "BLUE: 5", new Vector2(0, 1), new Vector2(40, -20), 44, TextAlignmentOptions.Left);
+        ui.turnText = Text(t, "Turn", "BLUE'S TURN", new Vector2(0.5f, 1), new Vector2(0, -5), 44, TextAlignmentOptions.Center);
+        ui.feedbackText = Text(t, "Feedback", "", new Vector2(0.5f, 1), new Vector2(0, -55), 38, TextAlignmentOptions.Center);
+        ui.redCountText = Text(t, "RedCount", "RED: 5", new Vector2(1, 1), new Vector2(-40, -20), 44, TextAlignmentOptions.Right);
         ui.blueCountText.color = ui.blueColor;
         ui.redCountText.color = ui.redColor;
 

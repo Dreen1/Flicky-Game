@@ -20,6 +20,8 @@ public class GameManager : MonoBehaviour
     public float maxCurveDegrees = 20f;
     public float hitRadiusMultiplier = 0.95f; // 1 = exact ship size, higher = more forgiving
     public float flightDuration = 0.35f;
+    [Tooltip("Share of the screen at the top kept clear for the score bar")]
+    public float hudFraction = 0.12f;
 
     [Header("Feedback")]
     public UIManager ui;
@@ -35,7 +37,6 @@ public class GameManager : MonoBehaviour
         public Team team;
         public int index;
         public Vector2 from, ctrl, to;
-        public bool offBoard;
     }
 
     readonly List<Ship> blue = new List<Ship>(), red = new List<Ship>();
@@ -57,13 +58,21 @@ public class GameManager : MonoBehaviour
         NewGame();
     }
 
-    // The board is whatever the camera sees
+    // The board is what the camera sees, minus the score bar at the top
     void BuildBoard()
     {
         Camera cam = Camera.main;
         float h = cam.orthographicSize, w = h * cam.aspect;
         Vector2 c = cam.transform.position;
-        board = new Rect(c.x - w, c.y - h, w * 2f, h * 2f);
+        board = new Rect(c.x - w, c.y - h, w * 2f, h * 2f * (1f - hudFraction));
+    }
+
+    // Asteroids-style: leaving one edge brings you in on the opposite edge
+    public Vector2 Wrap(Vector2 p)
+    {
+        p.x = board.xMin + Mathf.Repeat(p.x - board.xMin, board.width);
+        p.y = board.yMin + Mathf.Repeat(p.y - board.yMin, board.height);
+        return p;
     }
 
     void SpawnShips()
@@ -146,7 +155,6 @@ public class GameManager : MonoBehaviour
             from = from,
             ctrl = FlickMath.ControlPoint(from, to, mids, maxCurveDegrees),
             to = to,
-            offBoard = !board.Contains(to),
         };
         history.Add(move);
         StartCoroutine(PlayMove(move, false));
@@ -161,18 +169,13 @@ public class GameManager : MonoBehaviour
 
         List<(Ship ship, float t)> victims = FindVictims(ship, m);
         int next = 0;
-        yield return StartCoroutine(ship.FlyAlong(m.from, m.ctrl, m.to, flightDuration, t =>
+        yield return StartCoroutine(ship.FlyAlong(m.from, m.ctrl, m.to, flightDuration, Wrap, t =>
         {
             while (next < victims.Count && victims[next].t <= t) Kill(victims[next++].ship);
         }));
         while (next < victims.Count) Kill(victims[next++].ship);
 
-        if (m.offBoard)
-        {
-            Kill(ship);
-            if (ui) ui.SetFeedback("OFF BOARD - SHIP LOST!", FeedbackKind.Slow);
-        }
-        else if (victims.Count > 0)
+        if (victims.Count > 0)
         {
             if (ui) ui.SetFeedback(victims.Count > 1 ? $"{victims.Count}x HIT!" : "HIT!", FeedbackKind.Hit);
         }
@@ -199,7 +202,7 @@ public class GameManager : MonoBehaviour
         {
             if (s == mover || !s.IsAlive) continue;
             if (s.team == mover.team && !s.HasMoved) continue;
-            float t = FlickMath.CurveHitT(m.from, m.ctrl, m.to, s.Position, s.radius * hitRadiusMultiplier);
+            float t = FlickMath.CurveHitT(m.from, m.ctrl, m.to, s.Position, s.radius * hitRadiusMultiplier, Wrap);
             if (t >= 0f) hits.Add((s, t));
         }
         hits.Sort((a, b) => a.t.CompareTo(b.t));

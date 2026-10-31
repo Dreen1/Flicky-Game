@@ -43,21 +43,34 @@ public class Ship : MonoBehaviour
 
     // Flies along the curve. onProgress gets 0..1 every frame so the
     // GameManager can blow up targets the moment the ship reaches them.
-    public IEnumerator FlyAlong(Vector2 s, Vector2 c, Vector2 e, float duration, Action<float> onProgress)
+    // wrap keeps the ship on the board, Asteroids-style.
+    public IEnumerator FlyAlong(Vector2 s, Vector2 c, Vector2 e, float duration,
+                                Func<Vector2, Vector2> wrap, Action<float> onProgress)
     {
         float time = 0f;
+        Vector2 lastShift = Vector2.zero;
         while (time < duration)
         {
             time += Time.deltaTime;
             float t = Mathf.Clamp01(time / duration);
             float eased = 1f - (1f - t) * (1f - t); // fast launch, glide in
-            transform.position = FlickMath.Bezier(s, c, e, eased);
+            MoveTo(FlickMath.Bezier(s, c, e, eased), wrap, ref lastShift);
             Face(FlickMath.BezierTangent(s, c, e, eased));
             onProgress?.Invoke(eased);
             yield return null;
         }
-        transform.position = e;
+        MoveTo(e, wrap, ref lastShift);
         onProgress?.Invoke(1f);
+    }
+
+    void MoveTo(Vector2 raw, Func<Vector2, Vector2> wrap, ref Vector2 lastShift)
+    {
+        Vector2 p = wrap(raw);
+        Vector2 shift = p - raw;
+        // Just wrapped to the other edge: drop the trail so it doesn't streak across the screen
+        if (trail && (shift - lastShift).sqrMagnitude > 0.01f) trail.Clear();
+        lastShift = shift;
+        transform.position = p;
     }
 
     public void Explode()
