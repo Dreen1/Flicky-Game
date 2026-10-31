@@ -10,6 +10,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -137,8 +138,8 @@ public static class FlickBattleSetup
         m.SetColor("_Color", hdrColor);
         m.SetFloat("_Surface", 1f);
         m.SetFloat("_Blend", 2f);
-        m.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-        m.SetFloat("_DstBlend", (float)BlendMode.One);
+        m.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        m.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
         m.SetFloat("_ZWrite", 0f);
         m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
         m.renderQueue = 3000;
