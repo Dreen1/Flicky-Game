@@ -52,11 +52,11 @@ public static class FlickBattleSetup
         // Materials
         Material blueBody = Lit("BlueBody", new Color(0.12f, 0.2f, 0.4f), Color.black, 0.9f, 0.8f);
         Material blueAccent = Lit("BlueAccent", new Color(0.7f, 0.75f, 0.85f), Color.black, 0.8f, 0.7f);
-        Material redBody = Lit("RedBody", new Color(0.4f, 0.08f, 0.06f), Color.black, 0.9f, 0.8f);
-        Material redAccent = Lit("RedAccent", new Color(0.8f, 0.7f, 0.65f), Color.black, 0.6f, 0.9f);
+        Material redBody = Lit("RedBody", new Color(0.7f, 0.08f, 0.05f), new Color(0.35f, 0.02f, 0.01f), 0.8f, 0.8f);
+        Material redAccent = Lit("RedAccent", new Color(0.9f, 0.4f, 0.35f), Color.black, 0.6f, 0.9f);
         Material blueGlow = Glow("BlueGlow", BlueHot * 4f);
         Material redGlow = Glow("RedGlow", RedHot * 4f);
-        Material yellowGlow = Glow("LightGlow", new Color(1f, 0.85f, 0.3f) * 3f);
+        Material redLights = Glow("RedLights", new Color(1f, 0.15f, 0.1f) * 2f);
         Material ringGlow = Glow("RingGlow", Color.white * 2f);
         Material sparkGlow = Glow("Sparks", Color.white * 2.5f);
         Material starGlow = Glow("Stars", Color.white * 1.5f);
@@ -66,7 +66,7 @@ public static class FlickBattleSetup
         GameObject blueBoom = MakeExplosion("BlueExplosion", BlueHot, Color.white, sparkGlow);
         GameObject redBoom = MakeExplosion("RedExplosion", RedHot, new Color(1f, 0.8f, 0.3f), sparkGlow);
         Ship bluePrefab = MakeShip("BlueShip", Team.Blue, blueBody, blueAccent, blueGlow, blueGlow, ringGlow, blueBoom);
-        Ship redPrefab = MakeShip("RedShip", Team.Red, redBody, redAccent, yellowGlow, redGlow, ringGlow, redBoom);
+        Ship redPrefab = MakeShip("RedShip", Team.Red, redBody, redAccent, redLights, redGlow, ringGlow, redBoom);
 
         // Scene
         CameraShake shake = MakeCamera();
@@ -387,8 +387,9 @@ public static class FlickBattleSetup
         ui.blueCountText.color = ui.blueColor;
         ui.redCountText.color = ui.redColor;
 
-        MakeButton(t, "New Game", new Vector2(-180, 30), new Color(0.15f, 0.35f, 0.9f), gm.NewGame);
-        ui.replayButton = MakeButton(t, "Watch Replay", new Vector2(180, 30), new Color(0.45f, 0.2f, 0.85f), gm.WatchReplay);
+        // Bottom corners, out of the way of flicks
+        MakeButton(t, "New Game", new Vector2(0, 0), new Vector2(24, 20), new Color(0.15f, 0.35f, 0.9f), gm.NewGame);
+        ui.replayButton = MakeButton(t, "Watch Replay", new Vector2(1, 0), new Vector2(-24, 20), new Color(0.45f, 0.2f, 0.85f), gm.WatchReplay);
         return ui;
     }
 
@@ -410,14 +411,14 @@ public static class FlickBattleSetup
         return tmp;
     }
 
-    static GameObject MakeButton(Transform parent, string label, Vector2 pos, Color color, UnityAction onClick)
+    static GameObject MakeButton(Transform parent, string label, Vector2 anchor, Vector2 pos, Color color, UnityAction onClick)
     {
         GameObject go = new GameObject(label + " Button", typeof(RectTransform));
         go.transform.SetParent(parent, false);
         RectTransform rt = (RectTransform)go.transform;
-        rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0);
+        rt.anchorMin = rt.anchorMax = rt.pivot = anchor;
         rt.anchoredPosition = pos;
-        rt.sizeDelta = new Vector2(320, 90);
+        rt.sizeDelta = new Vector2(260, 70);
         go.AddComponent<Image>().color = color;
         Button button = go.AddComponent<Button>();
         UnityEventTools.AddPersistentListener(button.onClick, onClick);

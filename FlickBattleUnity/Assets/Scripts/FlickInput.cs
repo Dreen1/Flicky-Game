@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 // Reads touch (phone) or mouse (Editor) and turns swipes into flicks.
 // Put this on any object in the scene, e.g. the GameManager object.
@@ -34,7 +35,7 @@ public class FlickInput : MonoBehaviour
             Vector2 w = ToWorld(touch.position);
             switch (touch.phase)
             {
-                case TouchPhase.Began: Down(gm, w); break;
+                case TouchPhase.Began: if (!OverUI(touch.fingerId)) Down(gm, w); break;
                 case TouchPhase.Moved:
                 case TouchPhase.Stationary: Drag(w); break;
                 case TouchPhase.Ended: Up(gm, w); break;
@@ -44,10 +45,17 @@ public class FlickInput : MonoBehaviour
         else
         {
             Vector2 w = ToWorld(Input.mousePosition);
-            if (Input.GetMouseButtonDown(0)) Down(gm, w);
+            if (Input.GetMouseButtonDown(0)) { if (!OverUI(-1)) Down(gm, w); }
             else if (Input.GetMouseButton(0)) Drag(w);
             else if (Input.GetMouseButtonUp(0)) Up(gm, w);
         }
+    }
+
+    // Taps on buttons shouldn't grab a ship
+    static bool OverUI(int pointerId)
+    {
+        EventSystem es = EventSystem.current;
+        return es != null && es.IsPointerOverGameObject(pointerId);
     }
 
     void Down(GameManager gm, Vector2 w)

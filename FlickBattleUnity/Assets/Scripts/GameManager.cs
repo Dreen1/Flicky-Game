@@ -18,7 +18,7 @@ public class GameManager : MonoBehaviour
     public float minFlickSpeed = 4f;         // world units per second
     public float maxFlickDuration = 0.65f;   // seconds
     public float maxCurveDegrees = 20f;
-    public float hitRadiusMultiplier = 1.9f; // >1 = forgiving, Fruit Ninja-style
+    public float hitRadiusMultiplier = 0.95f; // 1 = exact ship size, higher = more forgiving
     public float flightDuration = 0.35f;
 
     [Header("Feedback")]
@@ -188,19 +188,34 @@ public class GameManager : MonoBehaviour
         if (!CheckWin()) NextTurn();
     }
 
-    // Everything the curve passes through dies, except your own ships still on the starting grid
+    // Everything the curve passes through dies, except:
+    // - your own ships still on the starting grid are never hit
+    // - only the first enemy still on its starting spot can die per flick,
+    //   so multi-kills only happen against ships already out on the field
     List<(Ship ship, float t)> FindVictims(Ship mover, Move m)
     {
-        List<(Ship ship, float t)> list = new List<(Ship ship, float t)>();
+        List<(Ship ship, float t)> hits = new List<(Ship ship, float t)>();
         foreach (Ship s in AllShips())
         {
             if (s == mover || !s.IsAlive) continue;
             if (s.team == mover.team && !s.HasMoved) continue;
             float t = FlickMath.CurveHitT(m.from, m.ctrl, m.to, s.Position, s.radius * hitRadiusMultiplier);
-            if (t >= 0f) list.Add((s, t));
+            if (t >= 0f) hits.Add((s, t));
         }
-        list.Sort((a, b) => a.t.CompareTo(b.t));
-        return list;
+        hits.Sort((a, b) => a.t.CompareTo(b.t));
+
+        List<(Ship ship, float t)> victims = new List<(Ship ship, float t)>();
+        bool dockedKilled = false;
+        foreach (var hit in hits)
+        {
+            if (!hit.ship.HasMoved)
+            {
+                if (dockedKilled) continue;
+                dockedKilled = true;
+            }
+            victims.Add(hit);
+        }
+        return victims;
     }
 
     void Kill(Ship s)
